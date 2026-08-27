@@ -189,7 +189,7 @@ io.on('connection', (socket) => {
   });
 
   // ── ENCUESTAS ──
-  socket.on('create_poll', ({ question, type, options, ratingMax }) => {
+  socket.on('create_poll', ({ question, type, options, ratingMax, imageUrl }) => {
     if(socket.role !== 'admin') return;
     const poll = {
       id:       genId('poll'),
