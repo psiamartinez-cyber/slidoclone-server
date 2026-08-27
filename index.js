@@ -238,6 +238,15 @@ io.on('connection', (socket) => {
     io.to(EVENT_CODE).emit('settings_update', { settings });
   });
 
+  socket.on('reset_questions', () => {
+    if(socket.role !== 'admin') return;
+    const code = EVENT_CODE;
+    Object.keys(DB.questions).forEach(k => delete DB.questions[k]);
+    Object.keys(DB.votes).forEach(k => delete DB.votes[k]);
+    io.to(code).emit('questions_reset');
+    console.log('[RESET] Preguntas eliminadas');
+  });
+
   socket.on('reset_session', () => {
     if(socket.role !== 'admin') return;
     DB.questions = {}; DB.polls = {}; DB.pollResponses = {}; DB.votes = {};
