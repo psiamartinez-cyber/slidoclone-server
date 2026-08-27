@@ -264,9 +264,18 @@ io.on('connection', (socket) => {
     if(!DB.pollResponses[pollId]) DB.pollResponses[pollId] = [];
     const already = DB.pollResponses[pollId].some(r => r.participantId === socket.participantId);
     if(already) { socket.emit('error', { message: 'Ya respondiste esta encuesta' }); return; }
-    const response = { participantId: socket.participantId, value, ts: Date.now() };
+    const poll = DB.polls[pollId];
+    // Para opción múltiple: guardar índice numérico para evitar colisión de textos iguales
+    // Para otros tipos (wordcloud, opentext, rating): guardar el valor directamente
+    let storedValue = value;
+    if(poll && poll.type === 'multiple'){
+      const idx = poll.options.indexOf(value);
+      storedValue = idx !== -1 ? String(idx) : value;
+    }
+    const response = { participantId: socket.participantId, value: storedValue, ts: Date.now() };
     DB.pollResponses[pollId].push(response);
     io.to(EVENT_CODE).emit('poll_response', { pollId, responses: DB.pollResponses[pollId] });
+    // Guardar en Sheets el texto legible (no el índice)
     saveToSheets('poll_response', { pollId, value, participantId: socket.participantId, ts: response.ts });
   });
 
