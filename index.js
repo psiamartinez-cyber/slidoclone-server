@@ -15,7 +15,7 @@ app.use(express.json());
 // ════════════════════════════════════════════════════════════
 const EVENT_CODE     = '#FORO2026';
 const ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || 'admin@slido.co';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2321';
 const SHEETS_WEBHOOK = process.env.SHEETS_WEBHOOK || null;
 
 // ════════════════════════════════════════════════════════════
