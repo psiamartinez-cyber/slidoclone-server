@@ -30,7 +30,7 @@ const DB = {
   session: {
     code: EVENT_CODE,
     participantCount: 0,
-    settings: { moderation: true, anonymous: true }
+    settings: { moderation: true, anonymous: true, qaEnabled: false }
   },
   questions:     {},
   polls:         {},
@@ -136,7 +136,7 @@ io.on('connection', (socket) => {
     Object.keys(DB.pollResponses).forEach(pId => { responsesMap[pId] = DB.pollResponses[pId]; });
 
     socket.emit('session_state', {
-      session:   DB.session,
+      session:   { ...DB.session, participantCount: DB.session.participantCount },
       questions: Object.values(DB.questions),
       polls:     Object.values(DB.polls),
       responses: responsesMap,
