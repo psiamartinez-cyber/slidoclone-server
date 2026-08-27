@@ -285,13 +285,13 @@ io.on('connection', (socket) => {
 
   socket.on('reset_session', () => {
     if(socket.role !== 'admin') return;
-    // Solo reinicia votos y contador de participantes — encuestas y preguntas se mantienen
-    DB.votes = {};
-    // Reiniciar contador de votos en preguntas
-    Object.values(DB.questions).forEach(q => { q.votes = 0; });
-    DB.session.participantCount = 0;
+    // Solo reinicia respuestas de encuestas
+    DB.pollResponses = {};
+    Object.values(DB.polls).forEach(p => { p.active = false; });
+    Object.keys(DB.polls).forEach(id => { DB.pollResponses[id] = []; });
     io.to(EVENT_CODE).emit('session_reset');
-    console.log('[RESET] Votos reiniciados — encuestas y preguntas conservadas');
+    saveToSheets('votes_reset', {});
+    console.log('[RESET] Respuestas de encuestas reiniciadas');
   });
 
   socket.on('reset_session_full', () => {
@@ -301,6 +301,22 @@ io.on('connection', (socket) => {
     io.to(EVENT_CODE).emit('session_reset_full');
     saveToSheets('session_reset', {});
     console.log('[RESET] Reset completo — todo eliminado');
+  });
+
+  // ── EDITAR ENCUESTA ────────────────────────────────────
+  socket.on('edit_poll', ({ pollId, question, type, options, ratingMax }) => {
+    if(socket.role !== 'admin') return;
+    const poll = DB.polls[pollId];
+    if(!poll) return;
+    poll.question  = question.trim().slice(0,200);
+    poll.type      = type;
+    poll.options   = options || [];
+    poll.ratingMax = ratingMax || 5;
+    // Si cambió el tipo, limpiar respuestas anteriores (incompatibles)
+    DB.pollResponses[pollId] = [];
+    io.to(EVENT_CODE).emit('poll_edited', { poll });
+    saveToSheets('poll_create', { id: poll.id, question: poll.question, type: poll.type, options: poll.options, ratingMax: poll.ratingMax, imageUrl: poll.imageUrl||'' });
+    console.log(`[EDIT] Encuesta editada: ${poll.question.slice(0,40)}`);
   });
 
   // ── DISCONNECT ─────────────────────────────────────────
