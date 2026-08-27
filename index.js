@@ -237,15 +237,19 @@ io.on('connection', (socket) => {
 
   socket.on('toggle_poll', ({ pollId }) => {
     if(socket.role !== 'admin') return;
-    // Desactivar todas primero
+    const poll = DB.polls[pollId];
+    if(!poll) return;
+    const wasActive = poll.active;
+    // Desactivar TODOS (incluido el poll actual)
     Object.values(DB.polls).filter(p=>p.active).forEach(p => {
       p.active = false;
       io.to(EVENT_CODE).emit('poll_update', { poll: p });
     });
-    const poll = DB.polls[pollId];
-    if(!poll) return;
-    poll.active = !poll.active;
-    io.to(EVENT_CODE).emit('poll_update', { poll });
+    // Solo reactivar si NO estaba activo antes
+    if(!wasActive){
+      poll.active = true;
+      io.to(EVENT_CODE).emit('poll_update', { poll });
+    }
   });
 
   socket.on('delete_poll', ({ pollId }) => {
