@@ -87,7 +87,8 @@ async function loadFromSheets() {
       qCount++;
     });
 
-    console.log(`[Sheets] Cargado: ${pollCount} encuestas, ${qCount} preguntas`);
+    const respCount = Object.values(DB.pollResponses).reduce((a,r)=>a+r.length,0);
+    console.log(`[Sheets] Cargado: ${pollCount} encuestas, ${qCount} preguntas, ${respCount} respuestas`);
   } catch(e) {
     console.warn('[Sheets] Error al cargar estado:', e.message);
   }
@@ -284,11 +285,22 @@ io.on('connection', (socket) => {
 
   socket.on('reset_session', () => {
     if(socket.role !== 'admin') return;
-    DB.questions = {}; DB.polls = {}; DB.pollResponses = {}; DB.votes = {};
+    // Solo reinicia votos y contador de participantes — encuestas y preguntas se mantienen
+    DB.votes = {};
+    // Reiniciar contador de votos en preguntas
+    Object.values(DB.questions).forEach(q => { q.votes = 0; });
     DB.session.participantCount = 0;
     io.to(EVENT_CODE).emit('session_reset');
+    console.log('[RESET] Votos reiniciados — encuestas y preguntas conservadas');
+  });
+
+  socket.on('reset_session_full', () => {
+    if(socket.role !== 'admin') return;
+    DB.questions = {}; DB.polls = {}; DB.pollResponses = {}; DB.votes = {};
+    DB.session.participantCount = 0;
+    io.to(EVENT_CODE).emit('session_reset_full');
     saveToSheets('session_reset', {});
-    console.log('[RESET] Sesión reiniciada');
+    console.log('[RESET] Reset completo — todo eliminado');
   });
 
   // ── DISCONNECT ─────────────────────────────────────────
